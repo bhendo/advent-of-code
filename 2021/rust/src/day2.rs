@@ -1,8 +1,11 @@
+#[derive(Copy, Clone)]
 pub enum Direction{
     Forward,
     Up,
     Down
 }
+
+#[derive(Copy, Clone)]
 pub struct Command {
     direction: Direction,
     units: i32,
@@ -40,16 +43,14 @@ pub fn part2(input: &[Command]) -> i32{
     return horizontal * depth
 }
 
-
-
 #[cfg(test)]
 mod tests {
     use test::Bencher;
     use super::{Command, part1, part2};
     use super::Direction::{Forward, Up, Down};
 
-    const EMPTY: &[Command] = &[];
-    const EXAMPLE: &[Command] = &[
+    const EMPTY: [Command;0] = [];
+    const EXAMPLE: [Command;6] = [
         Command{ direction: Forward, units: 5},
         Command{ direction: Down, units: 5},
         Command{ direction: Forward, units: 8},
@@ -57,30 +58,31 @@ mod tests {
         Command{ direction: Down, units: 8},
         Command{ direction: Forward, units: 2},
     ];
+    const BENCHMARK: [Command; 2000] = [Command{direction: Forward, units: 0}; 2000];
 
     #[test]
     fn test_part1() {
-        assert_eq!(part1(EMPTY), 0);        
-        assert_eq!(part1(EXAMPLE), 150);
+        assert_eq!(part1(&EMPTY), 0);        
+        assert_eq!(part1(&EXAMPLE), 150);
     }
     
     #[test]
     fn test_part2() {
-        assert_eq!(part2(EMPTY), 0);        
-        assert_eq!(part2(EXAMPLE), 900);
+        assert_eq!(part2(&EMPTY), 0);        
+        assert_eq!(part2(&EXAMPLE), 900);
     }
 
     #[bench]
     fn benchmark_part1(b: &mut Bencher) {
         b.iter(|| {
-            part1(EXAMPLE)
+            part1(&BENCHMARK)
         }) 
     }
 
     #[bench]
     fn benchmark_part2(b: &mut Bencher) {
         b.iter(|| {
-            part2(EXAMPLE)
+            part2(&BENCHMARK)
         }) 
     }
 }
