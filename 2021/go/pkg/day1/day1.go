@@ -1,6 +1,31 @@
 package day1
 
-import "aoc2021/pkg/lib"
+import (
+	"bufio"
+	"io"
+	"strconv"
+)
+
+func sumInts(in []int) (out int) {
+	for _, v := range in {
+		out += v
+	}
+	return
+}
+
+func intsFromReader(r io.Reader) ([]int, error) {
+	scanner := bufio.NewScanner(r)
+	scanner.Split(bufio.ScanWords)
+	out := []int{}
+	for scanner.Scan() {
+		x, err := strconv.Atoi(scanner.Text())
+		if err != nil {
+			return out, err
+		}
+		out = append(out, x)
+	}
+	return out, scanner.Err()
+}
 
 func part1(in []int) (out int) {
 	if len(in) < 2 {
@@ -19,7 +44,7 @@ func part2(in []int) (out int) {
 		return
 	}
 	for i := range in {
-		if i > 0 && i+3 <= len(in) && lib.SumInts(in[i-1:i+2]) < lib.SumInts(in[i:i+3]) {
+		if i > 0 && i+3 <= len(in) && sumInts(in[i-1:i+2]) < sumInts(in[i:i+3]) {
 			out++
 		}
 	}

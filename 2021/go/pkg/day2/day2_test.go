@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func Test_commandsFromFile(t *testing.T) {
+func Test_commandsFromReader(t *testing.T) {
 	type args struct {
 		r io.Reader
 	}
@@ -42,13 +42,13 @@ func Test_commandsFromFile(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := commandsFromFile(tt.args.r)
+			got, err := commandsFromReader(tt.args.r)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("commandsFromFile() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("commandsFromReader() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("commandsFromFile() = %v, want %v", got, tt.want)
+				t.Errorf("commandsFromReader() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -135,24 +135,22 @@ func TestPart2(t *testing.T) {
 }
 
 func Benchmark_part1(b *testing.B) {
-	file, _ := os.Open("input.txt")
-	data, _ := commandsFromFile(file)
+	data := make([]Command, 2000)
 	for i := 0; i < b.N; i++ {
 		Part1(data)
 	}
 }
 
 func Benchmark_part2(b *testing.B) {
-	file, _ := os.Open("input.txt")
-	data, _ := commandsFromFile(file)
+	data := make([]Command, 2000)
 	for i := 0; i < b.N; i++ {
 		Part2(data)
 	}
 }
 
 func Example_Answers() {
-	file, _ := os.Open("input.txt")
-	data, _ := commandsFromFile(file)
+	file, _ := os.Open("../../../_inputs/day2.txt")
+	data, _ := commandsFromReader(file)
 	fmt.Println(Part1(data), Part2(data))
 	// Output: 1727835 1544000595
 }

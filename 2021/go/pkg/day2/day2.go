@@ -27,7 +27,7 @@ func commandFromString(in string) (Command, error) {
 	}
 }
 
-func commandsFromFile(r io.Reader) ([]Command, error) {
+func commandsFromReader(r io.Reader) ([]Command, error) {
 	scanner := bufio.NewScanner(r)
 	scanner.Split(bufio.ScanLines)
 	out := []Command{}
