@@ -148,7 +148,7 @@ func Benchmark_part2(b *testing.B) {
 	}
 }
 
-func Example_Answers() {
+func Example_answers() {
 	file, _ := os.Open("../../../_inputs/day2.txt")
 	data, _ := commandsFromReader(file)
 	fmt.Println(Part1(data), Part2(data))
