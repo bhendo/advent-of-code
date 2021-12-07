@@ -1,5 +1,5 @@
 pub fn part1(mut crabs: Vec<i32>) -> i32 {
-    crabs.sort();
+    crabs.sort_unstable();
     let median_crab = crabs[crabs.len() / 2];
     crabs
         .iter()
