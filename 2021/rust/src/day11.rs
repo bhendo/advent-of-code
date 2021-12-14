@@ -35,10 +35,10 @@ pub fn part1(input: &mut Vec<Vec<u32>>) -> u32 {
                 flashes += bloom(input, x, y);
             }
         }
-        for y in 0..input.len() {
-            for x in 0..input[y].len() {
-                if input[y][x] > 9 {
-                    input[y][x] = 0;
+        for l in input.iter_mut() {
+            for v in l.iter_mut() {
+                if *v > 9 {
+                    *v = 0;
                 }
             }
         }
@@ -53,15 +53,19 @@ pub fn part2(input: &mut Vec<Vec<u32>>) -> u32 {
                 bloom(input, x, y);
             }
         }
-        if input.iter().all(|l| l.iter().all(|&v| v > 9)) {
-            return i + 1;
-        }
-        for y in 0..input.len() {
-            for x in 0..input[y].len() {
-                if input[y][x] > 9 {
-                    input[y][x] = 0;
+
+        let mut all = true;
+        for l in input.iter_mut() {
+            for v in l.iter_mut() {
+                if *v > 9 {
+                    *v = 0;
+                } else {
+                    all = false;
                 }
             }
+        }
+        if all {
+            return i + 1;
         }
     }
     0
