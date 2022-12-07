@@ -1,35 +1,33 @@
-use std::{collections::HashMap, vec};
+use std::{collections::HashSet, iter};
 
-pub fn part1(input: Vec<Vec<Vec<i32>>>) -> i32 {
+pub fn part1(input: Vec<(HashSet<i32>, HashSet<i32>)>) -> i32 {
     input.iter().fold(0, |acc, pair| {
-        let (elf1, elf2) = (pair[0].clone(), pair[1].clone());
-        if (elf1[0] >= elf2[0] && elf1[1] <= elf2[1]) || (elf1[0] <= elf2[0] && elf1[1] >= elf2[1])
-        {
-            return acc + 1;
-        }
-
-        acc
-    })
-}
-
-pub fn part2(input: Vec<Vec<Vec<i32>>>) -> i32 {
-    input.iter().fold(0, |acc, pair| {
-        let (elf1, elf2) = (pair[0].clone(), pair[1].clone());
-        if (elf1[0] >= elf2[0] && elf1[0] <= elf2[1]) || (elf1[0] <= elf2[0] && elf1[1] >= elf2[0])
-        {
+        if pair.0.is_subset(&pair.1) || pair.1.is_subset(&pair.0) {
             return acc + 1;
         }
         acc
     })
 }
 
-pub fn parse_input(input: &str) -> Vec<Vec<Vec<i32>>> {
+pub fn part2(input: Vec<(HashSet<i32>, HashSet<i32>)>) -> i32 {
+    input.iter().fold(0, |acc, pair| {
+        if pair.0.intersection(&pair.1).count() > 0 {
+            return acc + 1;
+        }
+        acc
+    })
+}
+
+pub fn parse_input(input: &str) -> Vec<(HashSet<i32>, HashSet<i32>)> {
     input
         .split("\n")
         .map(|l| {
-            l.split(",")
+            let p: Vec<HashSet<i32>> = l
+                .split(",")
                 .map(|e| e.split("-").map(|n| n.parse::<i32>().unwrap()).collect())
-                .collect()
+                .map(|e: Vec<i32>| HashSet::from_iter(e[0]..e[1] + 1))
+                .collect();
+            (p[0].clone(), p[1].clone())
         })
         .collect()
 }
