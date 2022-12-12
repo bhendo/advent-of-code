@@ -1,4 +1,4 @@
-use std::{collections::HashSet, iter};
+use std::collections::HashSet;
 
 pub fn part1(input: Vec<(HashSet<i32>, HashSet<i32>)>) -> i32 {
     input.iter().fold(0, |acc, pair| {
