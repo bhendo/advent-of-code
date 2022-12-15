@@ -1,26 +1,26 @@
 use std::collections::HashSet;
 
-fn new_knot(knot0: (i32, i32), knot1: (i32, i32)) -> (i32, i32) {
-    let mut dxdy = ((knot0.0 - knot1.0) / 2, (knot0.1 - knot1.1) / 2);
-    if ((knot0.0 - knot1.0).abs() > 1 && (knot0.1 - knot1.1).abs() > 0)
-        || ((knot0.0 - knot1.0).abs() > 0 && (knot0.1 - knot1.1).abs() > 1)
+fn follow(front: (i32, i32), back: (i32, i32)) -> (i32, i32) {
+    let mut dxdy = ((front.0 - back.0) / 2, (front.1 - back.1) / 2);
+    if ((front.0 - back.0).abs() > 1 && (front.1 - back.1).abs() > 0)
+        || ((front.0 - back.0).abs() > 0 && (front.1 - back.1).abs() > 1)
     {
-        if (knot0.0 - knot1.0).abs() > (knot0.1 - knot1.1).abs() {
-            if knot0.1 > knot1.1 {
+        if (front.0 - back.0).abs() > (front.1 - back.1).abs() {
+            if front.1 > back.1 {
                 dxdy.1 += 1;
             } else {
                 dxdy.1 -= 1;
             }
         }
-        if (knot0.0 - knot1.0).abs() < (knot0.1 - knot1.1).abs() {
-            if knot0.0 > knot1.0 {
+        if (front.0 - back.0).abs() < (front.1 - back.1).abs() {
+            if front.0 > back.0 {
                 dxdy.0 += 1;
             } else {
                 dxdy.0 -= 1;
             }
         }
     }
-    (knot1.0 + dxdy.0, knot1.1 + dxdy.1)
+    (back.0 + dxdy.0, back.1 + dxdy.1)
 }
 
 pub fn part1(directions: Vec<(&str, i32)>) -> i32 {
@@ -35,28 +35,28 @@ pub fn part1(directions: Vec<(&str, i32)>) -> i32 {
             "U" => {
                 for _ in 1..=*distance {
                     head.1 += 1;
-                    tail = new_knot(head, tail);
+                    tail = follow(head, tail);
                     visited.insert(tail);
                 }
             }
             "D" => {
                 for _ in 1..=*distance {
                     head.1 -= 1;
-                    tail = new_knot(head, tail);
+                    tail = follow(head, tail);
                     visited.insert(tail);
                 }
             }
             "R" => {
                 for _ in 1..=*distance {
                     head.0 += 1;
-                    tail = new_knot(head, tail);
+                    tail = follow(head, tail);
                     visited.insert(tail);
                 }
             }
             _ => {
                 for _ in 1..=*distance {
                     head.0 -= 1;
-                    tail = new_knot(head, tail);
+                    tail = follow(head, tail);
                     visited.insert(tail);
                 }
             }
@@ -75,7 +75,7 @@ pub fn part2(directions: Vec<(&str, i32)>) -> i32 {
                 for _ in 1..=*distance {
                     knots[0].1 += 1;
                     for i in 1..knots.len() {
-                        knots[i] = new_knot(knots[i - 1], knots[i]);
+                        knots[i] = follow(knots[i - 1], knots[i]);
                     }
                     visited.insert(knots[knots.len() - 1]);
                 }
@@ -84,7 +84,7 @@ pub fn part2(directions: Vec<(&str, i32)>) -> i32 {
                 for _ in 1..=*distance {
                     knots[0].1 -= 1;
                     for i in 1..knots.len() {
-                        knots[i] = new_knot(knots[i - 1], knots[i]);
+                        knots[i] = follow(knots[i - 1], knots[i]);
                     }
                     visited.insert(knots[knots.len() - 1]);
                 }
@@ -93,7 +93,7 @@ pub fn part2(directions: Vec<(&str, i32)>) -> i32 {
                 for _ in 1..=*distance {
                     knots[0].0 += 1;
                     for i in 1..knots.len() {
-                        knots[i] = new_knot(knots[i - 1], knots[i]);
+                        knots[i] = follow(knots[i - 1], knots[i]);
                     }
                     visited.insert(knots[knots.len() - 1]);
                 }
@@ -102,7 +102,7 @@ pub fn part2(directions: Vec<(&str, i32)>) -> i32 {
                 for _ in 1..=*distance {
                     knots[0].0 -= 1;
                     for i in 1..knots.len() {
-                        knots[i] = new_knot(knots[i - 1], knots[i]);
+                        knots[i] = follow(knots[i - 1], knots[i]);
                     }
                     visited.insert(knots[knots.len() - 1]);
                 }
