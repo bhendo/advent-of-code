@@ -96,7 +96,7 @@ move 2 from 2 to 1
 move 1 from 1 to 2";
 
     #[test]
-    fn test_day1() {
+    fn test_part1() {
         assert_eq!(part1(parse_input(EXAMPLE)), "CMZ");
         assert_eq!(
             part1(parse_input(include_str!("../_inputs/day5.txt"))),

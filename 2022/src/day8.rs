@@ -131,7 +131,7 @@ mod tests {
 35390";
 
     #[test]
-    fn test_day1() {
+    fn test_part1() {
         assert_eq!(part1(parse_input(EXAMPLE)), 21);
         assert_eq!(
             part1(parse_input(include_str!("../_inputs/day8.txt"))),

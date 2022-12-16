@@ -44,7 +44,7 @@ mod tests {
 10000";
 
     #[test]
-    fn test_day1() {
+    fn test_part1() {
         assert_eq!(part1(parse_input(EXAMPLE)), 24000);
         assert_eq!(
             part1(parse_input(include_str!("../_inputs/day1.txt"))),

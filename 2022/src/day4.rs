@@ -45,7 +45,7 @@ mod tests {
 2-6,4-8";
 
     #[test]
-    fn test_day1() {
+    fn test_part1() {
         assert_eq!(part1(parse_input(EXAMPLE)), 2);
         assert_eq!(part1(parse_input(include_str!("../_inputs/day4.txt"))), 433)
     }
