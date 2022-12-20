@@ -35,22 +35,8 @@ impl PartialOrd for Packet {
 
 impl PartialEq for Packet {
     fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Packet::Integer(l), Packet::Integer(r)) => l == r,
-            (Packet::List(l), Packet::List(r)) => match l.len().cmp(&r.len()) {
-                Ordering::Equal => {
-                    let mut i = 0;
-                    while i < l.len() && i < r.len() {
-                        match l[i].cmp(&r[i]) {
-                            Ordering::Equal => {}
-                            _ => return false,
-                        };
-                        i += 1;
-                    }
-                    true
-                }
-                _ => false,
-            },
+        match self.cmp(other) {
+            Ordering::Equal => true,
             _ => false,
         }
     }
