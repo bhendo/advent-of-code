@@ -124,22 +124,18 @@ pub fn parse_input(input: &str) -> Cave {
                 let Rock(ex, ey) = path[i];
                 match sx.abs_diff(ex) {
                     0 => {
-                        let mut range_y = 0..=0;
+                        let mut range_y = ey..=sy;
                         if sy < ey {
                             range_y = sy..=ey;
-                        } else {
-                            range_y = ey..=sy;
                         }
                         for y in range_y {
                             expanded_path.push(Rock(sx, y));
                         }
                     }
                     _ => {
-                        let mut range_x = 0..=0;
+                        let mut range_x = ex..=sx;
                         if sx < ex {
                             range_x = sx..=ex;
-                        } else {
-                            range_x = ex..=sx;
                         }
                         for x in range_x {
                             expanded_path.push(Rock(x, sy));
