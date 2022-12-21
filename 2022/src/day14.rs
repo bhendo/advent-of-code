@@ -1,11 +1,11 @@
 use core::usize::MIN;
-use std::{collections::HashSet, vec};
+use std::{collections::BTreeSet, vec};
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Rock(usize, usize);
 
 pub struct Cave {
-    rocks: HashSet<Rock>,
+    rocks: BTreeSet<Rock>,
     abyss_start: usize,
     floor: usize,
 }
@@ -150,7 +150,7 @@ pub fn parse_input(input: &str) -> Cave {
             expanded_path
         })
         .flat_map(|p| p.into_iter())
-        .collect::<HashSet<Rock>>();
+        .collect::<BTreeSet<Rock>>();
     let floor = abyss_start + 1;
     Cave {
         rocks,
