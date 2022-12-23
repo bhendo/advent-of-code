@@ -1,45 +1,27 @@
 extern crate regex;
 use regex::Regex;
-use std::{
-    collections::BTreeSet,
-    i32::{MAX, MIN},
-    ops::{Add, AddAssign},
-    sync::{Arc, RwLock},
-    thread, vec,
-};
+use std::i64::{MAX, MIN};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Point(i32, i32);
-
-impl AddAssign for Point {
-    fn add_assign(&mut self, other: Self) {
-        *self = Self(self.0 + other.0, self.1 + other.1);
-    }
-}
-impl Add for Point {
-    type Output = Self;
-    fn add(self, other: Self) -> Self {
-        Self(self.0 + other.0, self.1 + other.1)
-    }
-}
+pub struct Point(i64, i64);
 
 impl Point {
-    fn line(&self, other: Self) -> BTreeSet<Self> {
-        let m = (other.1 - self.1) as f32 / (other.0 - self.0) as f32;
-        let b = (m * self.0 as f32 - self.1 as f32) * -1f32;
+    fn line(&self, other: Self) -> Vec<Self> {
+        let m = (other.1 - self.1) as f64 / (other.0 - self.0) as f64;
+        let b = (m * self.0 as f64 - self.1 as f64) * -1f64;
 
         (self.0..=other.0)
             .map(|x| {
-                let y = (m * x as f32 + b) as i32;
+                let y = (m * x as f64 + b) as i64;
                 Point(x, y)
             })
             .collect()
     }
 
-    fn manhatten_distance(&self, other: &Self) -> i32 {
+    fn manhatten_distance(&self, other: &Self) -> i64 {
         (self.0 - other.0).abs() + (self.1 - other.1).abs()
     }
-    fn bounded(&self, max: i32) -> bool {
+    fn is_in_bounds(&self, max: i64) -> bool {
         (self.0 <= max && self.0 >= 0) && (self.1 <= max && self.1 >= 0)
     }
 }
@@ -49,12 +31,20 @@ pub struct Beacon {
     point: Point,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct Sensor {
     point: Point,
     beacon: Beacon,
-    distance: i32,
+    distance: i64,
+    surrounding_space: Vec<Point>,
 }
+
+impl Sensor {
+    fn is_likely_in_bounds(&self, max: i64) -> bool {
+        self.surrounding_space.iter().any(|p| p.is_in_bounds(max))
+    }
+}
+
 #[derive(Debug)]
 pub struct Cave {
     sensors: Vec<Sensor>,
@@ -62,11 +52,23 @@ pub struct Cave {
     max: Point,
 }
 
-pub fn part1(cave: Cave, y: i32) -> i32 {
+fn space_just_beyond(Point(x, y): Point, distance: i64) -> Vec<Point> {
+    let mut just_beyond_reach = vec![];
+    let top = Point(x, y + distance + 1);
+    let bottom = Point(x, y - distance - 1);
+    let right = Point(x + distance + 1, y);
+    let left = Point(x - distance - 1, y);
+    just_beyond_reach.append(&mut top.line(right));
+    just_beyond_reach.append(&mut right.line(bottom));
+    just_beyond_reach.append(&mut bottom.line(left));
+    just_beyond_reach.append(&mut left.line(top));
+    just_beyond_reach
+}
+
+pub fn part1(cave: Cave, y: i64) -> i64 {
     (cave.min.0..=cave.max.0).fold(0, |acc, x| {
         match cave.sensors.iter().any(|s| {
-            ((s.point.0 - x).abs() + (s.point.1 - y).abs()) <= s.distance
-                && s.beacon.point != Point(x, y)
+            s.point.manhatten_distance(&Point(x, y)) <= s.distance && s.beacon.point != Point(x, y)
         }) {
             true => acc + 1,
             false => acc,
@@ -74,36 +76,32 @@ pub fn part1(cave: Cave, y: i32) -> i32 {
     })
 }
 
-pub fn part2(cave: Cave, max: i32) -> i64 {
-    let mut just_beyond_reach = BTreeSet::new();
-    cave.sensors.iter().for_each(|s| {
-        let top = Point(s.point.0, s.point.1 + s.distance + 1);
-        let right = Point(s.point.0 + s.distance + 1, s.point.1);
-        let bottom = Point(s.point.0, s.point.1 - s.distance - 1);
-        let left = Point(s.point.0 - s.distance - 1, s.point.1);
-
-        if top.bounded(max) || right.bounded(max) || bottom.bounded(max) || left.bounded(max) {
-            just_beyond_reach.append(&mut top.line(right));
-            just_beyond_reach.append(&mut right.line(bottom));
-            just_beyond_reach.append(&mut bottom.line(left));
-            just_beyond_reach.append(&mut left.line(top));
-        }
-    });
-
-    let beacon = just_beyond_reach
-        .into_iter()
-        .filter(|p| {
-            p.bounded(max)
-                && cave
-                    .sensors
-                    .iter()
-                    .all(|s| s.point.manhatten_distance(p) > s.distance)
+pub fn part2(cave: Cave, max: i64) -> i64 {
+    let mut sensors_in_bounds = vec![];
+    let potential_beacons = cave
+        .sensors
+        .iter()
+        .filter_map(|s| match s.is_likely_in_bounds(max) {
+            true => {
+                sensors_in_bounds.push(s);
+                Some(s.surrounding_space.to_owned())
+            }
+            false => None,
         })
-        .collect::<BTreeSet<Point>>();
+        .flatten()
+        .collect::<Vec<Point>>();
 
-    let Point(x, y) = beacon.first().unwrap();
-
-    *x as i64 * 4_000_000 + *y as i64
+    for p in potential_beacons {
+        if p.is_in_bounds(max)
+            && sensors_in_bounds
+                .iter()
+                .all(|&s| s.point.manhatten_distance(&p) > s.distance)
+        {
+            let Point(x, y) = p;
+            return x as i64 * 4_000_000 + y as i64;
+        }
+    }
+    0
 }
 
 pub fn parse_input(input: &str) -> Cave {
@@ -117,11 +115,13 @@ pub fn parse_input(input: &str) -> Cave {
             .split("\n")
             .map(|l| {
                 let caps = re.captures(l).unwrap();
-                let sx: i32 = caps.get(1).map(|m| m.as_str().parse().unwrap()).unwrap();
-                let sy: i32 = caps.get(2).map(|m| m.as_str().parse().unwrap()).unwrap();
-                let bx: i32 = caps.get(3).map(|m| m.as_str().parse().unwrap()).unwrap();
-                let by: i32 = caps.get(4).map(|m| m.as_str().parse().unwrap()).unwrap();
-                let distance = (sx - bx).abs() + (sy - by).abs();
+                let sx: i64 = caps.get(1).map(|m| m.as_str().parse().unwrap()).unwrap();
+                let sy: i64 = caps.get(2).map(|m| m.as_str().parse().unwrap()).unwrap();
+                let bx: i64 = caps.get(3).map(|m| m.as_str().parse().unwrap()).unwrap();
+                let by: i64 = caps.get(4).map(|m| m.as_str().parse().unwrap()).unwrap();
+                let sensor_point = Point(sx, sy);
+                let beacon_point = Point(bx, by);
+                let distance = sensor_point.manhatten_distance(&beacon_point);
                 if distance > max_distance {
                     max_distance = distance;
                 }
@@ -138,11 +138,12 @@ pub fn parse_input(input: &str) -> Cave {
                     max.1 = sy + distance;
                 }
                 Sensor {
-                    point: Point(sx, sy),
+                    point: sensor_point,
                     beacon: Beacon {
-                        point: Point(bx, by),
+                        point: beacon_point,
                     },
                     distance,
+                    surrounding_space: space_just_beyond(sensor_point, distance),
                 }
             })
             .collect(),
@@ -176,7 +177,7 @@ Sensor at x=20, y=1: closest beacon is at x=15, y=3";
         assert_eq!(part1(parse_input(EXAMPLE), 10), 26);
         assert_eq!(
             part1(parse_input(include_str!("../_inputs/day15.txt")), 2_000_000),
-            5335787
+            5_335_787
         )
     }
 
@@ -185,7 +186,7 @@ Sensor at x=20, y=1: closest beacon is at x=15, y=3";
         assert_eq!(part2(parse_input(EXAMPLE), 20), 56_000_011);
         assert_eq!(
             part2(parse_input(include_str!("../_inputs/day15.txt")), 4_000_000),
-            13673971349056
+            13_673_971_349_056
         )
     }
 
