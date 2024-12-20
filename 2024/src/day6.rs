@@ -9,6 +9,7 @@ impl Add for Vector {
     }
 }
 
+#[derive(Clone)]
 struct Guard {
     location: Vector,
     velocity: Vector,
@@ -38,9 +39,8 @@ struct Lab {
     height: usize,
     barriers: HashSet<Vector>,
 }
-
 impl Lab {
-    fn exists(&self, vector: Vector) -> bool {
+    fn is_vector_in_bounds(&self, vector: Vector) -> bool {
         vector.0 < self.width as isize
             && vector.0 >= 0
             && vector.1 < self.height as isize
@@ -83,8 +83,10 @@ pub fn part1(input: &str) -> usize {
         })
         .count();
 
-    while lab.exists(guard.next_location()) {
-        if lab.barriers.get(&guard.next_location()).is_some() {
+    while let next_location = guard.next_location()
+        && lab.is_vector_in_bounds(next_location)
+    {
+        if lab.barriers.contains(&next_location) {
             guard.turn();
         } else {
             guard.step_forward();
@@ -92,8 +94,84 @@ pub fn part1(input: &str) -> usize {
     }
     guard.visited.len()
 }
-pub fn part2(_input: &str) -> usize {
-    0
+pub fn part2(input: &str) -> usize {
+    let mut lab = Lab {
+        width: 0,
+        height: 0,
+        barriers: HashSet::new(),
+    };
+    let mut guard = Guard {
+        location: Vector(0, 0),
+        velocity: Vector(0, -1),
+        visited: HashSet::new(),
+    };
+    lab.height = input
+        .lines()
+        .enumerate()
+        .map(|(y, line)| {
+            lab.width = line
+                .chars()
+                .enumerate()
+                .map(|(x, pos)| {
+                    match pos {
+                        '#' => {
+                            lab.barriers.insert(Vector(x as isize, y as isize));
+                        }
+                        '^' => {
+                            guard.location = Vector(x as isize, y as isize);
+                            guard.visited.insert(Vector(x as isize, y as isize));
+                        }
+                        _ => {}
+                    }
+                    pos
+                })
+                .count()
+        })
+        .count();
+
+    let starting_location = guard.location;
+    let starting_velocity = guard.velocity;
+
+    while let next_location = guard.next_location()
+        && lab.is_vector_in_bounds(next_location)
+    {
+        if lab.barriers.contains(&next_location) {
+            guard.turn();
+        } else {
+            guard.step_forward();
+        }
+    }
+
+    guard.visited.iter().fold(0, |loops, possible_barrier| {
+        let mut possible_guard = Guard {
+            location: starting_location,
+            velocity: starting_velocity,
+            visited: HashSet::new(),
+        };
+        let mut looped = false;
+        let mut visited_barriers = HashSet::new();
+
+        lab.barriers.insert(*possible_barrier);
+
+        while let next_location = possible_guard.next_location()
+            && lab.is_vector_in_bounds(next_location)
+        {
+            if lab.barriers.contains(&next_location) {
+                if visited_barriers.insert((possible_guard.location, possible_guard.velocity)) {
+                    possible_guard.turn();
+                } else {
+                    looped = true;
+                    break;
+                }
+            } else {
+                possible_guard.step_forward();
+            }
+        }
+
+        lab.barriers.remove(possible_barrier);
+
+        loops + looped as usize
+    })
 }
 #[cfg(test)]
 mod tests {
@@ -124,8 +202,8 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(EXAMPLE), 0);
-        //assert_eq!(part2(include_str!("../_inputs/day6.txt")), 0)
+        assert_eq!(part2(EXAMPLE), 6);
+        assert_eq!(part2(include_str!("../_inputs/day6.txt")), 1604)
     }
 
     #[bench]

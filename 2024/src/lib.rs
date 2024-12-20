@@ -1,4 +1,4 @@
-#![feature(test, iter_map_windows, map_try_insert)]
+#![feature(test, iter_map_windows, map_try_insert, let_chains)]
 extern crate test;
 pub mod day1;
 pub mod day2;
