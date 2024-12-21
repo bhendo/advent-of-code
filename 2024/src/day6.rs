@@ -1,4 +1,9 @@
-use std::{collections::HashSet, ops::Add};
+use std::{
+    collections::HashSet,
+    ops::Add,
+    sync::{mpsc, Arc, Mutex},
+    thread,
+};
 
 #[derive(Clone, Copy, Eq, Hash, PartialEq, PartialOrd)]
 struct Vector(isize, isize);
@@ -34,6 +39,7 @@ impl Guard {
     }
 }
 
+#[derive(Clone)]
 struct Lab {
     width: usize,
     height: usize,
@@ -142,36 +148,100 @@ pub fn part2(input: &str) -> usize {
         }
     }
 
-    guard.visited.iter().fold(0, |loops, possible_barrier| {
-        let mut possible_guard = Guard {
-            location: starting_location,
-            velocity: starting_velocity,
-            visited: HashSet::new(),
-        };
-        let mut looped = false;
-        let mut visited_barriers = HashSet::new();
+    // Begin concurrent approach
 
-        lab.barriers.insert(*possible_barrier);
+    let (possible_barriers_tx, possible_barriers_rx) = mpsc::channel();
+    let (looped_tx, looped_rx) = mpsc::channel();
+    let possible_barriers_rx = Arc::new(Mutex::new(possible_barriers_rx));
 
-        while let next_location = possible_guard.next_location()
-            && lab.is_vector_in_bounds(next_location)
-        {
-            if lab.barriers.contains(&next_location) {
-                if visited_barriers.insert((possible_guard.location, possible_guard.velocity)) {
-                    possible_guard.turn();
+    for _ in 0..thread::available_parallelism().unwrap().get() {
+        let looped_tx = looped_tx.clone();
+        let lab = lab.clone();
+        let possible_barriers_rx = Arc::clone(&possible_barriers_rx);
+        thread::spawn(move || loop {
+            let possible_barrier = match possible_barriers_rx.lock().unwrap().recv() {
+                Ok(possible_barrier) => possible_barrier,
+                Err(_) => return,
+            };
+            let mut possible_guard = Guard {
+                location: starting_location,
+                velocity: starting_velocity,
+                visited: HashSet::new(),
+            };
+
+            let mut possible_barriers = lab.barriers.clone();
+            let mut looped = false;
+            let mut visited_barriers = HashSet::new();
+            possible_barriers.insert(possible_barrier);
+
+            while let next_location = possible_guard.next_location()
+                && lab.is_vector_in_bounds(next_location)
+            {
+                if possible_barriers.contains(&next_location) {
+                    if visited_barriers.insert((possible_guard.location, possible_guard.velocity)) {
+                        possible_guard.turn();
+                    } else {
+                        looped = true;
+                        break;
+                    }
                 } else {
-                    looped = true;
-                    break;
+                    possible_guard.step_forward();
                 }
-            } else {
-                possible_guard.step_forward();
+            }
+            looped_tx.send(looped).unwrap()
+        });
+    }
+
+    guard
+        .visited
+        .iter()
+        .for_each(|possible_barrier| possible_barriers_tx.send(*possible_barrier).unwrap());
+
+    let mut loops = 0;
+    for _ in guard.visited.iter() {
+        if let Ok(looped) = looped_rx.recv() {
+            if looped {
+                loops += 1
             }
         }
+    }
+    loops
 
-        lab.barriers.remove(possible_barrier);
+    // End concurrent approach
 
-        loops + looped as usize
-    })
+    //
+    // Preserved single thread approach
+    //
+    //guard.visited.iter().fold(0, |loops, possible_barrier| {
+    //    let mut possible_guard = Guard {
+    //        location: starting_location,
+    //        velocity: starting_velocity,
+    //        visited: HashSet::new(),
+    //    };
+    //    let mut looped = false;
+    //    let mut visited_barriers = HashSet::new();
+    //
+    //    lab.barriers.insert(*possible_barrier);
+    //
+    //    while let next_location = possible_guard.next_location()
+    //        && lab.is_vector_in_bounds(next_location)
+    //    {
+    //        if lab.barriers.contains(&next_location) {
+    //            if visited_barriers.insert((possible_guard.location, possible_guard.velocity)) {
+    //                possible_guard.turn();
+    //            } else {
+    //                looped = true;
+    //                break;
+    //            }
+    //        } else {
+    //            possible_guard.step_forward();
+    //        }
+    //    }
+    //
+    //    lab.barriers.remove(possible_barrier);
+    //
+    //    loops + looped as usize
+    //})
 }
 #[cfg(test)]
 mod tests {
