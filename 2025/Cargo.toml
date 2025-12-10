@@ -5,4 +5,5 @@ edition = "2024"
 
 [dependencies]
 itertools = "0.14.0"
-
+bitvec = "1.0"
+good_lp = { version = "1.8", default-features = false, features = ["microlp"] }
